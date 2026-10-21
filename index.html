@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Login · Smart Student Portal</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="responsive.css" />
+</head>
+<body class="auth-body">
+
+<div class="auth-wrap">
+
+  <section class="auth-brand">
+    <div class="auth-brand-inner">
+      <div class="brand-lg">
+        <div class="brand-mark">SP</div>
+        <div><h1>Smart Student Portal</h1><span>Management System</span></div>
+      </div>
+
+      <h2 class="auth-tagline">One portal for<br />everything campus.</h2>
+      <p class="auth-sub">Attendance, results, assignments, fees, library and analytics —
+        unified into a single, secure academic workspace.</p>
+
+      <ul class="auth-features">
+        <li><i>📊</i><div><strong>Live Analytics</strong><span>Track CGPA, attendance &amp; performance trends</span></div></li>
+        <li><i>🗓️</i><div><strong>Smart Timetable</strong><span>Daily schedule with room &amp; faculty details</span></div></li>
+        <li><i>💳</i><div><strong>Fee Tracking</strong><span>Installments, dues and printable receipts</span></div></li>
+        <li><i>📢</i><div><strong>Notice Board</strong><span>Never miss a circular or deadline again</span></div></li>
+      </ul>
+
+      <div class="auth-stats">
+        <div><b>10</b><span>Students</span></div>
+        <div><b>08</b><span>Courses</span></div>
+        <div><b>96%</b><span>Avg. Attendance</span></div>
+      </div>
+    </div>
+    <div class="auth-glow g1"></div>
+    <div class="auth-glow g2"></div>
+  </section>
+
+  <section class="auth-panel">
+    <div class="auth-card">
+      <header class="auth-head">
+        <h3>Sign in to your account</h3>
+        <p>Select a role and enter your credentials</p>
+      </header>
+
+      <div class="role-tabs" id="roleTabs">
+        <button class="role-tab active" data-role="admin">👨‍💼 Administrator</button>
+        <button class="role-tab" data-role="student">🎓 Student</button>
+      </div>
+
+      <form id="loginForm" autocomplete="off">
+        <label class="field">
+          <span>Email / Roll Number</span>
+          <input type="text" id="loginId" placeholder="admin@campus.edu" required />
+        </label>
+
+        <label class="field">
+          <span>Password</span>
+          <div class="pw-wrap">
+            <input type="password" id="loginPw" placeholder="••••••••" required />
+            <button type="button" class="pw-toggle" id="pwToggle"><i class="fa-solid fa-eye"></i></button>
+          </div>
+        </label>
+
+        <div class="auth-row">
+          <label class="check"><input type="checkbox" id="remember" checked /><span>Remember me</span></label>
+          <a href="#" class="link" id="forgotLink">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="btn primary block lg" id="loginBtn">Sign In →</button>
+        <p class="auth-error" id="loginError"></p>
+      </form>
+
+      <div class="demo-box">
+        <p class="demo-title">🔑 Demo Credentials</p>
+        <div class="demo-row">
+          <span>Admin</span><code>admin@campus.edu / admin123</code>
+          <button class="mini-btn" data-fill="admin@campus.edu|admin123">Use</button>
+        </div>
+        <div class="demo-row">
+          <span>Student</span><code>CSE2021001 / student123</code>
+          <button class="mini-btn" data-fill="CSE2021001|student123">Use</button>
+        </div>
+      </div>
+
+      <p class="auth-foot">Smart Student Portal v2.0 · B.Tech CSE Major Project</p>
+    </div>
+  </section>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  if (Store.session()) { location.replace('dashboard.html'); return; }
+
+  let role = 'admin';
+  const tabs = $$('#roleTabs .role-tab');
+
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    role = t.dataset.role;
+    $('#loginId').placeholder = role === 'admin' ? 'admin@campus.edu' : 'CSE2021001';
+    $('#loginError').textContent = '';
+  }));
+
+  $$('[data-fill]').forEach(b => b.addEventListener('click', () => {
+    const parts = b.dataset.fill.split('|');
+    $('#loginId').value = parts[0];
+    $('#loginPw').value = parts[1];
+    const isAdmin = parts[0].indexOf('@') > -1;
+    role = isAdmin ? 'admin' : 'student';
+    tabs.forEach(x => x.classList.remove('active'));
+    (isAdmin ? tabs[0] : tabs[1]).classList.add('active');
+    $('#loginError').textContent = '';
+  }));
+
+  $('#pwToggle').addEventListener('click', () => {
+    const inp = $('#loginPw');
+    const showing = inp.type === 'text';
+    inp.type = showing ? 'password' : 'text';
+    $('#pwToggle').innerHTML = `<i class="fa-solid ${showing ? 'fa-eye' : 'fa-eye-slash'}"></i>`;
+  });
+
+  $('#forgotLink').addEventListener('click', e => {
+    e.preventDefault();
+    App.toast('Please contact the admin office to reset your password.', 'info', 'Password Reset');
+  });
+
+  $('#loginForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const id = $('#loginId').value.trim();
+    const pw = $('#loginPw').value.trim();
+    const err = $('#loginError');
+    const btn = $('#loginBtn');
+    err.textContent = '';
+
+    let account = null;
+
+    if (role === 'admin') {
+      const a = DB.users.find(u =>
+        u.role === 'admin' &&
+        u.email.toLowerCase() === id.toLowerCase() &&
+        u.password === pw);
+      if (a) account = { name: a.name, email: a.email, role: 'admin' };
+    } else {
+      const st = DB.students.find(s =>
+        (s.id.toLowerCase() === id.toLowerCase() ||
+         s.email.toLowerCase() === id.toLowerCase()) && pw === 'student123');
+      if (st) account = { name: st.name, email: st.email, role: 'student', studentId: st.id };
+    }
+
+    if (!account) {
+      err.textContent = '✕ Invalid credentials. Please check and try again.';
+      btn.classList.add('shake');
+      setTimeout(() => btn.classList.remove('shake'), 500);
+      return;
+    }
+
+    btn.textContent = 'Signing in…';
+    btn.disabled = true;
+
+    setTimeout(() => {
+      Store.setSession(account);
+      App.logActivity(account.name + ' signed in to the portal');
+      location.href = 'dashboard.html';
+    }, 550);
+  });
+})();
+</script>
+</body>
+</html>
